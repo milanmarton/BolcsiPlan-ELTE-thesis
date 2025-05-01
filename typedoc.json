@@ -1,0 +1,32 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": [
+    "./src/index.jsx",
+    "./src/App.jsx",
+    "./src/components/Header.jsx",
+    "./src/components/Footer.jsx",
+    "./src/components/ScheduleTable.jsx",
+    "./src/components/StaffModal.jsx",
+    "./src/components/SettingsModal.jsx",
+    "./src/components/Legend.jsx",
+    "./src/components/LoginPage.jsx",
+    "./src/components/ShiftTypesModal.jsx",
+    "./src/components/StaffEditSubModal.jsx",
+    "./src/hooks/useStaffData.js",
+    "./src/contexts/AuthContext.jsx",
+    "./src/utils/helpers.js",
+    "./src/firebaseConfig.js"
+  ],
+  "out": "./docs",
+  "name": "Bölcsődei munkaidőbeosztó dokumentáció",
+  "includeVersion": true,
+  "excludePrivate": true,
+  "excludeExternals": true,
+  "exclude": [
+    "**/*.test.js",
+    "**/*.test.jsx",
+    "src/setupTests.js",
+    "**/node_modules/**"
+  ],
+  "readme": "./README.md"
+}

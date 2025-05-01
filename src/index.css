@@ -1,0 +1,144 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@media print {
+    /* Print Page Setup and Resets */
+    @page {
+        size: A4;
+        margin: 0;
+    }
+
+    body {
+        background-color: white !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+    }
+
+    .container {
+        max-width: none !important;
+        width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    .print\:hidden {
+        display: none !important;
+    }
+
+    .print\:shadow-none {
+        box-shadow: none !important;
+    }
+
+    /* Print Spacing and Layout Utilities */
+    .print\:mb-1 {
+        margin-bottom: 0.15rem !important;
+    }
+    .print\:mb-2 {
+        margin-bottom: 0.3rem !important;
+    }
+    .print\:mb-4 {
+        margin-bottom: 0.6rem !important;
+    }
+    .print\:p-1 {
+        padding: 0.15rem !important;
+    }
+    .print\:p-2 {
+        padding: 0.3rem !important;
+    }
+    .print\:py-1 {
+        padding-top: 0.15rem !important;
+        padding-bottom: 0.15rem !important;
+    }
+    .print\:px-1 {
+        padding-left: 0.15rem !important;
+        padding-right: 0.15rem !important;
+    }
+    .print\:py-4 {
+        padding-top: 0.6rem !important;
+        padding-bottom: 0.6rem !important;
+    }
+    .print\:gap-1 {
+        gap: 0.15rem !important;
+    }
+    .print\:grid-cols-6 {
+        grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+    }
+    .print\:grid-cols-8 {
+        grid-template-columns: repeat(8, minmax(0, 1fr)) !important;
+    }
+
+    /* Print Table Styling */
+    table {
+        font-size: 80% !important;
+        width: 100% !important;
+        border-collapse: collapse !important;
+    }
+
+    th,
+    td {
+        padding: 2px 4px !important;
+    }
+
+    table th {
+        padding-top: 0.15rem !important;
+        padding-bottom: 0.15rem !important;
+        height: auto !important;
+    }
+
+    table td {
+        padding-top: 0.15rem !important;
+        padding-bottom: 0.15rem !important;
+        padding-left: 0.2rem !important;
+        padding-right: 0.2rem !important;
+        height: auto !important;
+    }
+
+    /* Print Text and Element Sizing */
+    .print\:text-sm {
+        font-size: 0.7rem !important;
+        line-height: 1rem !important;
+    }
+    .print\:text-base {
+        font-size: 0.8rem !important;
+        line-height: 1.2rem !important;
+    }
+    .text-xs {
+        font-size: 0.6rem !important;
+    }
+    .text-sm {
+        font-size: 0.7rem !important;
+        .print\:w-6 {
+            width: 1.2rem !important;
+        }
+        .print\:h-6 {
+            height: 1.2rem !important;
+        }
+
+        /* Print Color and Appearance */
+        * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            color-adjust: exact !important;
+        }
+
+        .print\:bg-gray-100 {
+            background-color: #f3f4f6 !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+            color-adjust: exact;
+        }
+
+        .print\:bg-blue-100 {
+            background-color: #dbeafe !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+            color-adjust: exact;
+        }
+
+        .print\:hover\:bg-white:hover {
+            background-color: white !important; /* prevent hover styles */
+        }
+    }
+}
