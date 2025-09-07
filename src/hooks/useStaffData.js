@@ -360,10 +360,11 @@ const useStaffData = (currentWeek) => {
    * @function saveGlobalSettings
    * Saves the entire global settings object to Firestore. Ensures staffList is sorted.
    * @param {object} newSettings - The complete global settings object to save.
+   * @param {boolean} [bypassSafetyChecks=false] - If true, skips safety checks for accidental data deletion (use for demo data loading).
    * @returns {Promise<boolean>} True if the save was successful, false otherwise.
    */
   const saveGlobalSettings = useCallback(
-    async (newSettings) => {
+    async (newSettings, bypassSafetyChecks = false) => {
       const docRef = getGlobalSettingsRef();
       if (!docRef || !newSettings) {
         console.error("Save failed: Missing docRef or newSettings");
@@ -371,6 +372,71 @@ const useStaffData = (currentWeek) => {
         return false;
       }
       setSaveError(null);
+
+      // Safety check: Detect potentially accidental deletion of all data (unless bypassed for demo data)
+      if (!bypassSafetyChecks) {
+        const isEmpty = (arr) => !arr || arr.length === 0;
+        const isEmptyObj = (obj) => !obj || Object.keys(obj).length === 0;
+
+        const newUnits = newSettings.units || [];
+        const newGroups = newSettings.groups || [];
+        const newJobTitles = newSettings.jobTitles || [];
+        const newStaffList = newSettings.staffList || [];
+        const newShiftTypes = newSettings.shiftTypes || [];
+        const newTimeSlots = newSettings.timeSlots || {};
+
+        // Check if all major data structures are empty
+        const allCategoriesEmpty =
+          isEmpty(newUnits) && isEmpty(newGroups) && isEmpty(newJobTitles);
+        const allDataEmpty =
+          allCategoriesEmpty &&
+          isEmpty(newStaffList) &&
+          isEmpty(newShiftTypes) &&
+          isEmptyObj(newTimeSlots);
+
+        // If current settings exist and have data, but new settings are suspiciously empty
+        if (globalSettings && !allDataEmpty) {
+          const currentUnits = globalSettings.units || [];
+          const currentGroups = globalSettings.groups || [];
+          const currentJobTitles = globalSettings.jobTitles || [];
+          const currentStaffList = globalSettings.staffList || [];
+          const currentShiftTypes = globalSettings.shiftTypes || [];
+
+          const hadData =
+            currentUnits.length > 0 ||
+            currentGroups.length > 0 ||
+            currentJobTitles.length > 0 ||
+            currentStaffList.length > 0 ||
+            currentShiftTypes.length > 0;
+
+          // Warn if we're about to delete all categories but keep other data
+          if (
+            hadData &&
+            allCategoriesEmpty &&
+            (!isEmpty(newStaffList) || !isEmpty(newShiftTypes))
+          ) {
+            console.error(
+              "Save blocked: Attempting to delete all categories (units, groups, job titles) while keeping staff/shifts.",
+            );
+            setSaveError(
+              "Biztonsági figyelmeztetés: Minden kategória (egységek, csoportok, munkakörök) törlésre kerülne, de a személyzet és műszakok megmaradnának. Ez valószínűleg nem szándékos. Ellenőrizze az adatokat.",
+            );
+            return false;
+          }
+
+          // Warn if we're about to delete everything
+          if (hadData && allDataEmpty) {
+            console.error(
+              "Save blocked: Attempting to delete all settings data.",
+            );
+            setSaveError(
+              "Biztonsági figyelmeztetés: Az összes beállítás törlésre kerülne (egységek, csoportok, munkakörök, személyzet, műszaktípusok). Ez valószínűleg nem szándékos. Ha valóban törölni szeretné az összes adatot, használja a 'Demó adatok' funkciót a beállítások újbóli feltöltéséhez.",
+            );
+            return false;
+          }
+        }
+      } // End of bypassSafetyChecks conditional
+
       try {
         // Ensure staffList exists and is sorted before saving
         const settingsToSave = {
@@ -392,7 +458,7 @@ const useStaffData = (currentWeek) => {
         return false;
       }
     },
-    [getGlobalSettingsRef],
+    [getGlobalSettingsRef, globalSettings],
   );
 
   /**
@@ -483,7 +549,7 @@ const useStaffData = (currentWeek) => {
           );
           setGlobalSettings(blankGlobalSettings);
           // Automatically save the blank settings for a new user or if document was deleted
-          saveGlobalSettings(blankGlobalSettings);
+          saveGlobalSettings(blankGlobalSettings, true); // Bypass safety checks for legitimate initialization
         }
         setSettingsLoading(false);
       },

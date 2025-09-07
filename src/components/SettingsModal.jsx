@@ -104,6 +104,9 @@ const SettingsModal = ({
   // Track if modal was opened during loading to prevent accidental saves
   const [openedDuringLoading, setOpenedDuringLoading] = useState(false);
 
+  // Track if demo data was loaded to allow bypassing safety checks
+  const [demoDataLoaded, setDemoDataLoaded] = useState(false);
+
   // State for the staff edit/add sub-modal
   const [showStaffEditModal, setShowStaffEditModal] = useState(false);
   const [editingStaffMember, setEditingStaffMember] = useState(null); // Holds staff data for the sub-modal, null if adding
@@ -128,8 +131,9 @@ const SettingsModal = ({
     if (settingsLoading) {
       setOpenedDuringLoading(true);
     } else if (!settingsLoading && globalSettings) {
-      // Reset flag when settings have loaded and modal reopens properly
+      // Reset flags when settings have loaded and modal reopens properly
       setOpenedDuringLoading(false);
+      setDemoDataLoaded(false);
     }
 
     setUnits([...(globalSettings?.units || [])]);
@@ -604,8 +608,11 @@ const SettingsModal = ({
         };
 
         console.log("Calling saveGlobalSettings with:", newSettingsToSave);
-        // Call the save function from the hook
-        const success = await saveGlobalSettings(newSettingsToSave);
+        // Call the save function from the hook (bypass safety checks if demo data was loaded)
+        const success = await saveGlobalSettings(
+          newSettingsToSave,
+          demoDataLoaded,
+        );
 
         if (success) {
           console.log("Global settings saved successfully via unified call.");
@@ -668,6 +675,9 @@ const SettingsModal = ({
     setNewGroup("");
     setNewJobTitle("");
     setSaveError("");
+
+    // Mark that demo data was loaded to bypass safety checks on save
+    setDemoDataLoaded(true);
 
     alert(
       "Demó adatok betöltve a szerkesztőbe. A végleges mentéshez kattintson a 'Változtatások mentése' gombra.",
