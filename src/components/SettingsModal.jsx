@@ -47,6 +47,7 @@ import StaffEditSubModal from "./StaffEditSubModal";
  * @property {GlobalSettingsData} globalSettings - Current settings from the main app state.
  * @property {GlobalSettingsData} demoGlobalSettings - Pre-defined demo data.
  * @property {boolean} settingsLoading - True if global settings are currently being loaded.
+ * @property {boolean} developerMode - True if developer mode is enabled (allows editing staff IDs).
  * @property {function(GlobalSettingsData): Promise<boolean>} saveGlobalSettings - Main save function that updates the entire settings object at once. Returns true on success.
  * @property {function(string): Promise<boolean>} handleAddUnit - Callback to add a unit globally. Returns true on success.
  * @property {function(string): Promise<boolean>} handleRemoveUnit - Callback to remove a unit globally. Returns true on success.
@@ -71,6 +72,7 @@ const SettingsModal = ({
   globalSettings,
   demoGlobalSettings,
   settingsLoading,
+  developerMode,
   // Unified Save Function
   saveGlobalSettings,
   // Category Modifiers (Primarily for local UI updates)
@@ -882,8 +884,16 @@ const SettingsModal = ({
       <div className="bg-gray-50 rounded-lg shadow-xl w-full max-w-6xl h-[90vh] flex flex-col">
         {/* Modal Header */}
         <div className="p-3 border-b bg-white flex justify-between items-center flex-shrink-0 rounded-t-lg">
-          <h2 id="settings-modal-title" className="text-xl font-semibold">
+          <h2
+            id="settings-modal-title"
+            className="text-xl font-semibold flex items-center"
+          >
             Beállítások
+            {developerMode && (
+              <span className="ml-3 px-2 py-1 bg-orange-500 text-white text-xs rounded font-normal">
+                🛠️ DEV MODE
+              </span>
+            )}
           </h2>
           {/* Tabs */}
           <div
@@ -1191,6 +1201,7 @@ const SettingsModal = ({
           staffMember={editingStaffMember}
           // Pass LOCAL category state to the sub-modal for its dropdowns
           globalSettings={{ units, groups, jobTitles }}
+          developerMode={developerMode}
           onSave={handleSaveStaffSubModal}
           onClose={() => setShowStaffEditModal(false)}
         />

@@ -76,6 +76,12 @@ const StaffEditSubModal = ({
    */
   const [error, setError] = useState("");
 
+  /**
+   * @state {boolean} devMode - Developer mode flag to enable manual ID editing.
+   * Activated by Ctrl+Shift+D keyboard shortcut.
+   */
+  const [devMode, setDevMode] = useState(false);
+
   // ==========================================================================
   // Derived State & Constants
   // ==========================================================================
@@ -116,6 +122,38 @@ const StaffEditSubModal = ({
     setError(""); // Clear errors when modal initializes or staff member changes
   }, [staffMember, isEditing]);
 
+  /**
+   * @effect Handles keyboard shortcuts for developer mode.
+   * Ctrl+Shift+D toggles developer mode for manual ID editing.
+   */
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.ctrlKey && event.shiftKey && event.key === "D") {
+        event.preventDefault();
+        setDevMode((prev) => {
+          const newMode = !prev;
+          if (newMode) {
+            console.log(
+              "🛠️ DEVELOPER MODE ENABLED - Manual ID editing is now available!",
+            );
+            console.log(
+              "💡 TIP: Use your original staff IDs (e.g., staff_demo_1, staff_demo_2) to restore weekly schedules.",
+            );
+            console.log("⌨️  Press Ctrl+Shift+D again to disable dev mode.");
+          } else {
+            console.log("🛠️ Developer mode DISABLED - ID editing locked.");
+          }
+          return newMode;
+        });
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
+
   // ==========================================================================
   // Event Handlers
   // ==========================================================================
@@ -142,10 +180,21 @@ const StaffEditSubModal = ({
    */
   const handleSaveClick = () => {
     setError(""); // Clear previous errors
+
+    // Validate name field
     if (!localData.name.trim()) {
       setError("Név megadása kötelező!"); // Set error if name is empty
       return; // Stop the save process
     }
+
+    // Validate ID field in developer mode
+    if (devMode && !localData.id.trim()) {
+      setError(
+        "Fejlesztői módban az ID mező nem lehet üres! Adjon meg egy egyedi azonosítót a korábbi beosztások helyreállításához.",
+      );
+      return; // Stop the save process
+    }
+
     onSave(localData); // Pass the validated data to the parent component
   };
 
@@ -177,6 +226,50 @@ const StaffEditSubModal = ({
 
         {/* Modal Form Body */}
         <div className="p-6 space-y-4 overflow-y-auto max-h-[60vh]">
+          {/* Developer Mode Indicator */}
+          {devMode && (
+            <div className="bg-yellow-50 border-l-4 border-yellow-400 p-3 rounded">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <span className="text-yellow-600 font-bold">🛠️ DEV MODE</span>
+                </div>
+                <div className="ml-2">
+                  <p className="text-sm text-yellow-700 mb-2">
+                    Fejlesztői mód aktív - Az ID mező szerkeszthető.
+                    <kbd className="px-1 py-0.5 text-xs font-mono bg-yellow-200 rounded">
+                      Ctrl+Shift+D
+                    </kbd>{" "}
+                    a kikapcsoláshoz.
+                  </p>
+                  <div className="text-xs text-yellow-600 bg-yellow-100 p-2 rounded border">
+                    <p className="font-semibold mb-1">
+                      💡 Eredeti ID-k megtalálása:
+                    </p>
+                    <ul className="list-disc list-inside space-y-1">
+                      <li>Nyissa meg a böngésző Developer Tools-t (F12)</li>
+                      <li>
+                        Menjen az Application/Storage - IndexedDB -
+                        firebaseLocalStorageDb lapra
+                      </li>
+                      <li>
+                        Vagy ellenőrizze a heti beosztásokat a Firestore
+                        konzolban
+                      </li>
+                      <li>
+                        Keresse meg a staff objektumokat (pl. staff_demo_1,
+                        staff_demo_2)
+                      </li>
+                      <li>
+                        Használja ezeket az ID-kat a beosztások
+                        helyreállításához
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Error Display Area */}
           {error && (
             <p
@@ -187,25 +280,40 @@ const StaffEditSubModal = ({
             </p>
           )}
 
-          {/* Staff ID Input (Read-only) */}
+          {/* Staff ID Input (Developer Mode Conditional) */}
           <div>
             <label
               htmlFor="staffId"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
-              Azonosító (ID)
+              Azonosító (ID){" "}
+              {devMode && (
+                <span className="text-yellow-600 font-bold">
+                  [SZERKESZTHETŐ]
+                </span>
+              )}
             </label>
             <input
               type="text"
               id="staffId"
               name="id"
               value={localData.id}
-              readOnly
-              className="w-full p-2 border rounded bg-gray-100 text-gray-600 cursor-not-allowed"
+              onChange={devMode ? handleChange : undefined}
+              readOnly={!devMode}
+              className={`w-full p-2 border rounded ${
+                devMode
+                  ? "focus:ring-1 focus:ring-yellow-500 focus:border-yellow-500 outline-none bg-yellow-50"
+                  : "bg-gray-100 text-gray-600 cursor-not-allowed"
+              }`}
               aria-describedby="staffIdHelp"
+              placeholder={
+                devMode ? "Adja meg az egyedi staff ID-t..." : undefined
+              }
             />
             <p id="staffIdHelp" className="text-xs text-gray-500 mt-1">
-              Automatikusan generált azonosító.
+              {devMode
+                ? "⚠️ FONTOS: Használja a meglévő ID-kat a korábbi beosztások helyreállításához. Nyomja meg Ctrl+Shift+D az automatikus generáláshoz."
+                : "Automatikusan generált azonosító."}
             </p>
           </div>
 

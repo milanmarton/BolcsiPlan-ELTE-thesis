@@ -77,6 +77,13 @@ const NurseSchedulerApp = () => {
   const printableAreaRef = useRef(null);
 
   /**
+   * State hook to control developer mode for advanced features.
+   * Activated by pressing Ctrl+Shift+D.
+   * @type {[boolean, React.Dispatch<React.SetStateAction<boolean>>]}
+   */
+  const [developerMode, setDeveloperMode] = useState(false);
+
+  /**
    * Custom hook to fetch and manage staff, schedule, and settings data.
    * Provides data state (globalSettings, isLoading, errors) and functions to modify data.
    */
@@ -144,6 +151,33 @@ const NurseSchedulerApp = () => {
     if (isLoading || !globalSettings) return {};
     return getStaffByUnit();
   }, [isLoading, globalSettings, getStaffByUnit]); // getStaffByUnit dependency ensures recalc when its internal logic changes
+
+  /**
+   * @effect Developer mode keyboard shortcut listener
+   * Listens for Ctrl+Shift+D to toggle developer mode
+   */
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.ctrlKey && event.shiftKey && event.key === "D") {
+        event.preventDefault();
+        setDeveloperMode((prev) => {
+          const newMode = !prev;
+          console.log(`Developer mode ${newMode ? "ENABLED" : "DISABLED"}`);
+          if (newMode) {
+            alert(
+              "🛠️ Fejlesztői mód bekapcsolva!\n\nMost szerkesztheti a személyzet ID-kat a beállítások modalban.",
+            );
+          } else {
+            alert("Fejlesztői mód kikapcsolva.");
+          }
+          return newMode;
+        });
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   /**
    * Options for the "copy schedule" dropdown, representing the previous 4 weeks.
@@ -539,6 +573,7 @@ const NurseSchedulerApp = () => {
           globalSettings={globalSettings}
           demoGlobalSettings={demoGlobalSettings}
           settingsLoading={settingsLoading}
+          developerMode={developerMode}
           saveGlobalSettings={saveGlobalSettings} // Pass the unified save function
           handleAddUnit={handleAddUnit}
           handleRemoveUnit={handleRemoveUnit}
