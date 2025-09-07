@@ -46,6 +46,7 @@ import StaffEditSubModal from "./StaffEditSubModal";
  * @typedef {object} SettingsModalProps
  * @property {GlobalSettingsData} globalSettings - Current settings from the main app state.
  * @property {GlobalSettingsData} demoGlobalSettings - Pre-defined demo data.
+ * @property {boolean} settingsLoading - True if global settings are currently being loaded.
  * @property {function(GlobalSettingsData): Promise<boolean>} saveGlobalSettings - Main save function that updates the entire settings object at once. Returns true on success.
  * @property {function(string): Promise<boolean>} handleAddUnit - Callback to add a unit globally. Returns true on success.
  * @property {function(string): Promise<boolean>} handleRemoveUnit - Callback to remove a unit globally. Returns true on success.
@@ -69,6 +70,7 @@ import StaffEditSubModal from "./StaffEditSubModal";
 const SettingsModal = ({
   globalSettings,
   demoGlobalSettings,
+  settingsLoading,
   // Unified Save Function
   saveGlobalSettings,
   // Category Modifiers (Primarily for local UI updates)
@@ -99,6 +101,9 @@ const SettingsModal = ({
   const [localTimeSlots, setLocalTimeSlots] = useState({});
   const [staffList, setStaffList] = useState([]); // Local copy of the staff list for editing and reordering
 
+  // Track if modal was opened during loading to prevent accidental saves
+  const [openedDuringLoading, setOpenedDuringLoading] = useState(false);
+
   // State for the staff edit/add sub-modal
   const [showStaffEditModal, setShowStaffEditModal] = useState(false);
   const [editingStaffMember, setEditingStaffMember] = useState(null); // Holds staff data for the sub-modal, null if adding
@@ -119,6 +124,14 @@ const SettingsModal = ({
    * Sorts the initial local staff list based on `sortOrder`.
    */
   useEffect(() => {
+    // Track if modal was opened while settings were still loading
+    if (settingsLoading) {
+      setOpenedDuringLoading(true);
+    } else if (!settingsLoading && globalSettings) {
+      // Reset flag when settings have loaded and modal reopens properly
+      setOpenedDuringLoading(false);
+    }
+
     setUnits([...(globalSettings?.units || [])]);
     setGroups([...(globalSettings?.groups || [])]);
     setJobTitles([...(globalSettings?.jobTitles || [])]);
@@ -129,7 +142,7 @@ const SettingsModal = ({
 
     setLocalShiftTypes([...(globalSettings?.shiftTypes || [])]);
     setLocalTimeSlots({ ...(globalSettings?.timeSlots || {}) });
-  }, [globalSettings]);
+  }, [globalSettings, settingsLoading]);
 
   // --- Callbacks ---
 
@@ -523,6 +536,18 @@ const SettingsModal = ({
         "Save attempt failed: globalSettings or saveGlobalSettings is missing.",
       );
       setSaveError("Hiba: Mentési funkció vagy alapbeállítások hiányoznak.");
+      setIsSaving(false);
+      return;
+    }
+
+    // Prevent saving if modal was opened during loading to avoid overwriting with empty data
+    if (openedDuringLoading) {
+      console.error(
+        "Save attempt blocked: Modal was opened while settings were still loading.",
+      );
+      setSaveError(
+        "A beállítások még betöltés alatt voltak amikor a modal megnyílt. A biztonság érdekében a mentés letiltva. Kérjük zárja be ezt az ablakot és nyissa meg újra.",
+      );
       setIsSaving(false);
       return;
     }
@@ -1096,7 +1121,19 @@ const SettingsModal = ({
                 role="alert"
                 aria-live="assertive"
               >
-                {saveError && (
+                {openedDuringLoading && (
+                  <>
+                    <AlertTriangle
+                      className="w-4 h-4 mr-1 flex-shrink-0"
+                      aria-hidden="true"
+                    />
+                    <span>
+                      ⚠️ Adatvesztés elkerülése érdekében a mentés letiltva.
+                      Zárja be ezt az ablakot és nyissa meg újra.
+                    </span>
+                  </>
+                )}
+                {!openedDuringLoading && saveError && (
                   <>
                     <AlertTriangle
                       className="w-4 h-4 mr-1 flex-shrink-0"
@@ -1120,7 +1157,7 @@ const SettingsModal = ({
               <button
                 onClick={saveChanges}
                 className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 disabled:opacity-50 flex items-center min-w-[180px] justify-center" // Added min-width and justify
-                disabled={isSaving || !globalSettings} // Disable if no settings loaded
+                disabled={isSaving || !globalSettings || openedDuringLoading} // Disable if no settings loaded or opened during loading
                 aria-label={
                   isSaving ? "Mentés folyamatban" : "Változtatások mentése"
                 }

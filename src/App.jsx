@@ -538,6 +538,7 @@ const NurseSchedulerApp = () => {
         <SettingsModal
           globalSettings={globalSettings}
           demoGlobalSettings={demoGlobalSettings}
+          settingsLoading={settingsLoading}
           saveGlobalSettings={saveGlobalSettings} // Pass the unified save function
           handleAddUnit={handleAddUnit}
           handleRemoveUnit={handleRemoveUnit}
